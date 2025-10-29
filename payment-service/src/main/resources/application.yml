@@ -1,14 +1,16 @@
 server:
-  port: 8082
+  port: 8080
 
 spring:
   application:
     name: payment-service
+  config:
+    import: "optional:file:../.env[.properties]"
 
   datasource:
     url: jdbc:postgresql://localhost:5432/paymentdb
-    username: postgres
-    password: password
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
@@ -18,5 +20,5 @@ spring:
 kafka:
   bootstrap-servers: localhost:9092
   producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    key-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

@@ -21,8 +21,8 @@ services:
     image: postgres:15.4
     environment:
       POSTGRES_DB: orderdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -34,8 +34,8 @@ services:
     image: postgres:15.4
     environment:
       POSTGRES_DB: paymentdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -47,8 +47,8 @@ services:
     image: postgres:15.4
     environment:
       POSTGRES_DB: restaurantdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5435:5432"
     volumes:
@@ -62,8 +62,8 @@ services:
       - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-order:5432/orderdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
@@ -77,8 +77,8 @@ services:
       - "8082:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/paymentdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
@@ -92,8 +92,8 @@ services:
       - "8083:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-restaurant:5432/restaurantdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
