@@ -17,8 +17,10 @@ spring:
       ddl-auto: update
     show-sql: true
 
-kafka:
-  bootstrap-servers: localhost:9092
-  producer:
-    key-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      client-id: payment-service-producer
+
+      key-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
