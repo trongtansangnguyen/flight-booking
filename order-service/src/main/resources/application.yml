@@ -4,11 +4,10 @@ server:
 spring:
   application:
     name: order-service
-  config:
-    import: "optional:file:../.env[.properties]"
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/orderdb
+    # cấu hình trong docker-compose.yml
+    url: ${SPRING_DATASOURCE_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
@@ -18,9 +17,8 @@ spring:
     show-sql: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
     producer:
       client-id: order-service-producer
-
-      key-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
