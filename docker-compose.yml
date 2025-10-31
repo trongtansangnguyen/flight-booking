@@ -1,9 +1,10 @@
-#version: '3.8'
+version: '3.8'
 
 services:
 
   kafka:
     image: apache/kafka:4.0.1
+    container_name: kafka
     ports:
       - "9092:9092"
     environment:
@@ -14,11 +15,15 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     networks:
       - app-network
 
   postgres-order:
     image: postgres:15.4
+    container_name: postgres-order
     environment:
       POSTGRES_DB: orderdb
       POSTGRES_USER: ${POSTGRES_USER}
@@ -32,6 +37,7 @@ services:
 
   postgres-payment:
     image: postgres:15.4
+    container_name: postgres-payment
     environment:
       POSTGRES_DB: paymentdb
       POSTGRES_USER: ${POSTGRES_USER}
@@ -43,21 +49,24 @@ services:
     networks:
       - app-network
 
-  postgres-restaurant:
+  postgres-flight:
     image: postgres:15.4
+    container_name: postgres-flight
     environment:
-      POSTGRES_DB: restaurantdb
+      POSTGRES_DB: flightdb
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5435:5432"
     volumes:
-      - pgdata-restaurant:/var/lib/postgresql/data
+      - pgdata-flight:/var/lib/postgresql/data
     networks:
       - app-network
 
   order-service:
-    build: ./order-service
+    build:
+      context: ./order-service
+    container_name: order-service
     ports:
       - "8081:8080"
     environment:
@@ -72,7 +81,9 @@ services:
       - app-network
 
   payment-service:
-    build: ./payment-service
+    build:
+      context: ./payment-service
+    container_name: payment-service
     ports:
       - "8082:8080"
     environment:
@@ -86,25 +97,28 @@ services:
     networks:
       - app-network
 
-  restaurant-service:
-    build: ./restaurant-service
+  flight-service:
+    build:
+      context: ./flight-service
+    container_name: flight-service
     ports:
       - "8083:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-restaurant:5432/restaurantdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-flight:5432/flightdb
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
-      - postgres-restaurant
+      - postgres-flight
     networks:
       - app-network
 
 volumes:
   pgdata-order:
   pgdata-payment:
-  pgdata-restaurant:
+  pgdata-flight:
 
 networks:
   app-network:
+    driver: bridge
