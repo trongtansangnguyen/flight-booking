@@ -1,5 +1,6 @@
 package org.example.flight.application.usecase;
 
+import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import org.example.flight.domain.exception.AirportNotFoundException;
 /**
  * Use Case Implementation for Airport
  */
+@Service
 public class AirportUseCaseImpl implements AirportUseCase {
     
     private final AirportRepositoryPort airportRepositoryPort;

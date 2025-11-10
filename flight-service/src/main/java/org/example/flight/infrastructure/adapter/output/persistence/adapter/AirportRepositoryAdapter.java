@@ -1,5 +1,6 @@
 package org.example.flight.infrastructure.adapter.output.persistence.adapter;
 
+import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.example.flight.domain.entity.Airport;
 import org.example.flight.infrastructure.adapter.output.persistence.entity.AirportJpaEntity;
 import org.example.flight.infrastructure.adapter.output.persistence.repository.AirportJpaRepository;
 
+@Repository
 public class AirportRepositoryAdapter implements AirportRepositoryPort {
 
     private final AirportJpaRepository jpaRepository;

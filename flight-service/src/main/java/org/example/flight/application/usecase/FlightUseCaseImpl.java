@@ -1,5 +1,6 @@
 package org.example.flight.application.usecase;
 
+import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import org.example.flight.domain.exception.FlightNotFoundException;
 /**
  * Use Case Implementation for Flight
  */
+@Service
 public class FlightUseCaseImpl implements FlightUseCase {
 
     private final FlightRepositoryPort flightRepositoryPort;
