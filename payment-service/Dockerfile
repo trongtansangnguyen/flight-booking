@@ -1,39 +1,33 @@
-# ----- Stage 1: Build -----
-# Sử dụng base image chứa JDK (Java Development Kit) để build
+# ----- Stage 1: Build (Tối ưu hóa) -----
 FROM eclipse-temurin:17-jdk-alpine as builder
 
-# Đặt thư mục làm việc
 WORKDIR /app
 
-# Copy các file build của Gradle (wrapper, build scripts)
+# 1. Chỉ copy các file build
 COPY gradlew .
 COPY gradle/ gradle/
 COPY build.gradle .
 COPY settings.gradle .
 
-# Copy source code
+# 2. TÁCH BIỆT LAYER DEPENDENCIES
+# Chỉ tải các thư viện. Layer này sẽ được cache
+# miễn là file build.gradle không thay đổi.
+RUN ./gradlew dependencies --no-daemon
+
+# 3. BÂY GIỜ MỚI COPY SOURCE CODE
+# Khi bạn đổi code, chỉ layer này và layer 'bootJar'
+# phải chạy lại. Layer 'dependencies' ở trên vẫn được cache.
 COPY src ./src
 
-# Cấp quyền thực thi cho gradlew
-RUN chmod +x ./gradlew
-
-# Build ứng dụng (sử dụng bootJar của Spring Boot và bỏ qua tests)
-# --no-daemon để không chạy Gradle daemon trong container
+# 4. Build ứng dụng
+# Lệnh này giờ sẽ chạy SIÊU NHANH vì thư viện đã có sẵn
+# Nó chỉ cần compile code 'src' của bạn
 RUN ./gradlew bootJar --no-daemon -x test
 
-# ----- Stage 2: Runtime -----
-# Sử dụng base image chỉ chứa JRE (Java Runtime Environment)
+# ----- Stage 2: Runtime (Giữ nguyên, đã rất tốt) -----
 FROM eclipse-temurin:17-jre-alpine
 
-# Đặt thư mục làm việc
 WORKDIR /app
-
-# Copy file .jar đã build từ stage 'builder'
-# Gradle lưu file build trong build/libs/
 COPY --from=builder /app/build/libs/*.jar app.jar
-
-# Expose port 8080 (port mặc định của Spring Boot)
 EXPOSE 8080
-
-# Lệnh để chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "app.jar"]
