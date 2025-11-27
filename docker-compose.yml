@@ -60,6 +60,8 @@ services:
       - "5435:5432"
     volumes:
       - pgdata-flight:/var/lib/postgresql/data
+      - ./flight-service/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./flight-service/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/data.sql
     networks:
       - app-network
 
