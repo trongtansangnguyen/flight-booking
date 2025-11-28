@@ -83,18 +83,17 @@ public class Flight {
         this.updatedAt = LocalDateTime.now();
     }
     
-    public void reserveSeat() {
-        if (this.availableSeats > 0) {
-            this.availableSeats--;
+    public void reserveSeat(int count) {
+        if (this.availableSeats >= count) {
+            this.availableSeats -= count;
             this.updatedAt = LocalDateTime.now();
         } else {
-            throw new IllegalStateException("Không còn ghế trống");
+            throw new IllegalStateException("sold_out");
         }
     }
     
-    public void releaseSeat() {
-        // Assuming we don't exceed the original capacity
-        this.availableSeats++;
+    public void releaseSeat(int count) {
+        this.availableSeats += count;
         this.updatedAt = LocalDateTime.now();
     }
     

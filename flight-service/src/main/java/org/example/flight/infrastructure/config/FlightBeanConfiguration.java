@@ -3,6 +3,7 @@ package org.example.flight.infrastructure.config;
 import org.example.flight.application.port.input.FlightUseCase;
 import org.example.flight.application.port.output.AircraftRepositoryPort;
 import org.example.flight.application.port.output.AirportRepositoryPort;
+import org.example.flight.application.port.output.FlightEventPublisher;
 import org.example.flight.application.port.output.FlightRepositoryPort;
 import org.example.flight.application.usecase.FlightUseCaseImpl;
 import org.example.flight.infrastructure.adapter.output.persistence.adapter.FlightRepositoryAdapter;
@@ -37,8 +38,8 @@ public class FlightBeanConfiguration {
     @Bean
     public FlightUseCase flightUseCase(FlightRepositoryPort flightRepositoryPort,
                                        AirportRepositoryPort airportRepositoryPort,
-                                       AircraftRepositoryPort aircraftRepositoryPort) {
-        return new FlightUseCaseImpl(flightRepositoryPort, airportRepositoryPort, aircraftRepositoryPort);
+                                       AircraftRepositoryPort aircraftRepositoryPort,
+                                       FlightEventPublisher flightEventPublisher) {
+        return new FlightUseCaseImpl(flightRepositoryPort, airportRepositoryPort, aircraftRepositoryPort, flightEventPublisher);
     }
 }
-

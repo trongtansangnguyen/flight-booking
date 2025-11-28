@@ -8,6 +8,9 @@ import org.example.flight.application.dto.FlightRequest;
 import org.example.flight.application.dto.FlightResponse;
 import org.example.flight.domain.entity.FlightStatus;
 
+import org.example.flight.application.dto.event.OrderCancelledEvent;
+import org.example.flight.application.dto.event.OrderReservationRequestedEvent;
+
 /**
  * Input Port (Use Case Interface) for Flight
  */
@@ -31,5 +34,9 @@ public interface FlightUseCase {
     FlightResponse updateFlightStatus(UUID id, FlightStatus status);
     
     void deleteFlight(UUID id);
+
+    void handleReservationRequest(OrderReservationRequestedEvent event);
+
+    void handleCompensation(OrderCancelledEvent event);
 }
 

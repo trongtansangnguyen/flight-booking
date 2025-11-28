@@ -5,11 +5,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.flight.application.dto.FlightRequest;
 import org.example.flight.application.dto.FlightResponse;
+import org.example.flight.application.dto.event.OrderCancelledEvent;
+import org.example.flight.application.dto.event.OrderReservationRequestedEvent;
+import org.example.flight.application.dto.event.SeatReservationFailedEvent;
+import org.example.flight.application.dto.event.SeatReservedEvent;
 import org.example.flight.application.port.input.FlightUseCase;
 import org.example.flight.application.port.output.AircraftRepositoryPort;
 import org.example.flight.application.port.output.AirportRepositoryPort;
+import org.example.flight.application.port.output.FlightEventPublisher;
 import org.example.flight.application.port.output.FlightRepositoryPort;
 import org.example.flight.domain.entity.Aircraft;
 import org.example.flight.domain.entity.Airport;
@@ -18,22 +24,27 @@ import org.example.flight.domain.entity.FlightStatus;
 import org.example.flight.domain.exception.AircraftNotFoundException;
 import org.example.flight.domain.exception.AirportNotFoundException;
 import org.example.flight.domain.exception.FlightNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Use Case Implementation for Flight
  */
+@Slf4j
 public class FlightUseCaseImpl implements FlightUseCase {
     
     private final FlightRepositoryPort flightRepositoryPort;
     private final AirportRepositoryPort airportRepositoryPort;
     private final AircraftRepositoryPort aircraftRepositoryPort;
+    private final FlightEventPublisher flightEventPublisher;
     
     public FlightUseCaseImpl(FlightRepositoryPort flightRepositoryPort,
                             AirportRepositoryPort airportRepositoryPort,
-                            AircraftRepositoryPort aircraftRepositoryPort) {
+                            AircraftRepositoryPort aircraftRepositoryPort,
+                            FlightEventPublisher flightEventPublisher) {
         this.flightRepositoryPort = flightRepositoryPort;
         this.airportRepositoryPort = airportRepositoryPort;
         this.aircraftRepositoryPort = aircraftRepositoryPort;
+        this.flightEventPublisher = flightEventPublisher;
     }
     
     @Override
@@ -217,6 +228,55 @@ public class FlightUseCaseImpl implements FlightUseCase {
         }
         flightRepositoryPort.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public void handleReservationRequest(OrderReservationRequestedEvent event) {
+        try {
+            log.info("Handling seat reservation request bookingId={} flightId={} seats={}",
+                event.getBookingId(), event.getFlightId(), event.getSeatCount());
+
+            Flight flight = flightRepositoryPort.findById(event.getFlightId())
+                .orElseThrow(() -> new FlightNotFoundException("Flight not found: " + event.getFlightId()));
+            
+            // Step 5: Check available seats
+            // Case A: Lock seats
+            flight.reserveSeat(event.getSeatCount());
+            flightRepositoryPort.save(flight);
+            
+            // Publish success event
+            flightEventPublisher.publishSeatReserved(
+                new SeatReservedEvent(event.getBookingId(), event.getFlightId(), event.getSeatCount()));
+            log.info("Seat reservation success bookingId={} remainingSeats={}",
+                event.getBookingId(), flight.getAvailableSeats());
+            
+        } catch (Exception e) {
+            // Case B: Failure (e.g. sold out)
+            // Reason usually "sold_out" from Flight entity
+            String reason = e.getMessage() != null ? e.getMessage() : "unknown_error";
+            log.warn("Seat reservation failed bookingId={} flightId={} reason={}",
+                event.getBookingId(), event.getFlightId(), reason, e);
+            flightEventPublisher.publishSeatReservationFailed(
+                new SeatReservationFailedEvent(event.getBookingId(), event.getFlightId(),
+                    event.getSeatCount(), reason));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void handleCompensation(OrderCancelledEvent event) {
+        // Step 12: Compensating Transaction
+        log.info("Processing seat compensation bookingId={} flightId={} seats={}",
+            event.getBookingId(), event.getFlightId(), event.getSeatCount());
+        flightRepositoryPort.findById(event.getFlightId())
+            .ifPresentOrElse(flight -> {
+                flight.releaseSeat(event.getSeatCount());
+                flightRepositoryPort.save(flight);
+                log.info("Seat compensation finished bookingId={} newAvailableSeats={}",
+                    event.getBookingId(), flight.getAvailableSeats());
+            }, () -> log.warn("Skip compensation bookingId={} flight {} not found",
+                event.getBookingId(), event.getFlightId()));
+    }
     
     private FlightResponse mapToResponse(Flight flight, Airport originAirport, 
                                         Airport destinationAirport, Aircraft aircraft) {
@@ -245,4 +305,3 @@ public class FlightUseCaseImpl implements FlightUseCase {
         );
     }
 }
-

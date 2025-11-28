@@ -106,6 +106,12 @@ NOTHING! ✅
 # BUILD SUCCESSFUL
 ```
 
+## 2025-11-28 – Cải tiến Flight Saga
+
+- Flight Use Case được bọc `@Transactional` ở hai nhánh Saga (`handleReservationRequest`, `handleCompensation`) kèm logging chuẩn `Slf4j` để dễ truy vết khi lock/trả ghế.
+- Listener Kafka và Publisher Kafka chuyển sang dùng logging thay vì `System.out`/silent publish; log chứa `bookingId`, `flightId`, `seatCount`, `reason` để audit.
+- Payload `SeatReservedEvent` và `SeatReservationFailedEvent` đã mở rộng thêm `flightId` và `seatCount`, giúp Order Service về sau có đủ dữ liệu idempotent mà không phải truy vấn lại.
+
 ## Các entities khác cần refactor tương tự:
 
 Bạn có thể áp dụng pattern này cho:
