@@ -9,20 +9,14 @@ COPY gradle/ gradle/
 COPY build.gradle .
 COPY settings.gradle .
 
-# 2. TÁCH BIỆT LAYER DEPENDENCIES
-# Chỉ tải các thư viện. Layer này sẽ được cache
-# miễn là file build.gradle không thay đổi.
-RUN ./gradlew dependencies --no-daemon
+# 2. Download dependencies trước (cache layer này)
+RUN ./gradlew dependencies --no-daemon --info || true
 
-# 3. BÂY GIỜ MỚI COPY SOURCE CODE
-# Khi bạn đổi code, chỉ layer này và layer 'bootJar'
-# phải chạy lại. Layer 'dependencies' ở trên vẫn được cache.
+# 3. Copy source code (rebuild khi code thay đổi)
 COPY src ./src
 
-# 4. Build ứng dụng
-# Lệnh này giờ sẽ chạy SIÊU NHANH vì thư viện đã có sẵn
-# Nó chỉ cần compile code 'src' của bạn
-RUN ./gradlew bootJar --no-daemon -x test
+# 4. Build với verbose output để debug
+RUN ./gradlew bootJar --no-daemon --info --stacktrace -x test
 
 # ----- Stage 2: Runtime (Giữ nguyên, đã rất tốt) -----
 FROM eclipse-temurin:17-jre-alpine

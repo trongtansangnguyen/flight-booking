@@ -1,6 +1,16 @@
-TRUNCATE TABLE flights RESTART IDENTITY CASCADE;
-TRUNCATE TABLE aircrafts RESTART IDENTITY CASCADE;
-TRUNCATE TABLE airports RESTART IDENTITY CASCADE;
+-- Clear existing data if tables exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'flights') THEN
+        TRUNCATE TABLE flights RESTART IDENTITY CASCADE;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'aircrafts') THEN
+        TRUNCATE TABLE aircrafts RESTART IDENTITY CASCADE;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'airports') THEN
+        TRUNCATE TABLE airports RESTART IDENTITY CASCADE;
+    END IF;
+END $$;
 
 -- Insert 100 random airports
 INSERT INTO airports (airport_id, code, name, city, country, created_at, updated_at)

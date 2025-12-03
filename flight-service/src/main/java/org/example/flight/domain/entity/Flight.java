@@ -92,14 +92,52 @@ public class Flight {
         }
     }
     
+    /**
+     * Reserve multiple seats at once
+     * @param quantity Number of seats to reserve
+     * @throws IllegalStateException if not enough seats available
+     */
+    public void reserveSeats(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        if (this.availableSeats < quantity) {
+            throw new IllegalStateException(
+                String.format("Không đủ ghế trống. Yêu cầu: %d, Còn lại: %d", quantity, this.availableSeats));
+        }
+        this.availableSeats -= quantity;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
     public void releaseSeat() {
         // Assuming we don't exceed the original capacity
         this.availableSeats++;
         this.updatedAt = LocalDateTime.now();
     }
     
+    /**
+     * Release multiple seats at once (compensation)
+     * @param quantity Number of seats to release
+     */
+    public void releaseSeats(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        this.availableSeats += quantity;
+        this.updatedAt = LocalDateTime.now();
+    }
+    
     public boolean hasAvailableSeats() {
         return this.availableSeats > 0;
+    }
+    
+    /**
+     * Check if enough seats are available
+     * @param quantity Number of seats needed
+     * @return true if enough seats available
+     */
+    public boolean hasEnoughSeats(int quantity) {
+        return this.availableSeats >= quantity;
     }
     
     public boolean isScheduled() {

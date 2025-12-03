@@ -4,17 +4,44 @@ import org.example.payment.application.dto.ProcessPaymentCommand;
 import org.example.payment.application.dto.RefundPaymentCommand;
 import org.example.payment.presentation.messaging.dto.FlightReservationFailedEvent;
 import org.example.payment.presentation.messaging.dto.OrderCreatedEvent;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface PaymentEventMapper {
+/**
+ * Mapper to convert incoming Kafka events to application commands
+ * Manual implementation to avoid MapStruct issues with record types
+ */
+@Component
+public class PaymentEventMapper {
 
-    // MapStruct tự biết "totalAmount" -> "amount"
-    @Mapping(source = "totalAmount", target = "amount")
-    ProcessPaymentCommand orderCreatedEventToProcessCommand(OrderCreatedEvent event);
+    /**
+     * Maps OrderCreatedEvent to ProcessPaymentCommand
+     * @param event incoming order created event
+     * @return process payment command
+     */
+    public ProcessPaymentCommand orderCreatedEventToProcessCommand(OrderCreatedEvent event) {
+        if (event == null) {
+            return null;
+        }
+        
+        // Record types use constructor directly, not builder pattern
+        return new ProcessPaymentCommand(
+                event.orderId(),
+                event.customerId(),
+                event.totalPrice()
+        );
+    }
 
-    // Map sự kiện bù trừ
-    RefundPaymentCommand flightFailedEventToRefundCommand(FlightReservationFailedEvent event);
-
+    /**
+     * Maps FlightReservationFailedEvent to RefundPaymentCommand
+     * @param event incoming flight reservation failed event (compensation)
+     * @return refund payment command
+     */
+    public RefundPaymentCommand flightFailedEventToRefundCommand(FlightReservationFailedEvent event) {
+        if (event == null) {
+            return null;
+        }
+        
+        // Record types use constructor directly, not builder pattern
+        return new RefundPaymentCommand(event.orderId());
+    }
 }

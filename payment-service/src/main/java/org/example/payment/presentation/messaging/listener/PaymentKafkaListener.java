@@ -22,9 +22,18 @@ public class PaymentKafkaListener {
     /**
      * Lắng nghe sự kiện SAGA (Happy Path)
      */
-    @KafkaListener(topics = "order.created", groupId = "payment-group")
+    @KafkaListener(
+            topics = "order.created",
+            groupId = "payment-group",
+            containerFactory = "orderCreatedKafkaListenerContainerFactory")
     public void handleOrderCreated(@Payload @Valid OrderCreatedEvent event) {
-        log.info("Received OrderCreated event: {}", event.orderId());
+        log.info("Received OrderCreated event: orderId={}, customerId={}, totalPrice={}", 
+                event.orderId(), event.customerId(), event.totalPrice());
+
+        if (event.customerId() == null) {
+            log.error("OrderCreated event has null customerId for order: {}", event.orderId());
+            throw new IllegalArgumentException("Customer ID cannot be null in OrderCreated event");
+        }
 
         var command = eventMapper.orderCreatedEventToProcessCommand(event);
         paymentUseCase.processPayment(command);
@@ -33,7 +42,10 @@ public class PaymentKafkaListener {
     /**
      * Lắng nghe sự kiện SAGA Compensation (Rubric B.8) từ Flight Service
      */
-    @KafkaListener(topics = "flight.reservation.failed", groupId = "payment-group")
+    @KafkaListener(
+            topics = "flight.reservation.failed",
+            groupId = "payment-group",
+            containerFactory = "flightReservationFailedKafkaListenerContainerFactory")
     public void handleFlightReservationFailed(@Payload @Valid FlightReservationFailedEvent event) {
         log.warn("Received FlightReservationFailed (compensation) event: {}", event.orderId());
 

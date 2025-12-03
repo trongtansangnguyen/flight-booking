@@ -7,8 +7,11 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan(basePackages = {
     "org.example.flight.infrastructure.adapter.input.rest",
+    "org.example.flight.infrastructure.adapter.input.messaging",
     "org.example.flight.infrastructure.adapter.output.persistence",
-    "org.example.flight.infrastructure.config"
+    "org.example.flight.infrastructure.adapter.output.messaging",
+    "org.example.flight.infrastructure.config",
+    "org.example.flight.application"
 })
 public class FlightServiceApplication {
 

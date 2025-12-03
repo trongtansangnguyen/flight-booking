@@ -6,9 +6,9 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-// DTO "hợp đồng" message từ Kafka
+// DTO "hợp đồng" message từ Kafka - phải khớp với Order Service
 public record OrderCreatedEvent(
         @NotNull UUID orderId,
         @NotNull UUID customerId,
-        @NotNull @Positive BigDecimal totalAmount
+        @NotNull @Positive BigDecimal totalPrice
 ) {}

@@ -112,6 +112,17 @@ public class PaymentServiceImpl implements PaymentUseCase {
 
         } catch (PaymentDomainException e) {
             log.error("Refund FAILED for order: {}. Reason: {}", command.orderId(), e.getMessage());
+            
+            // Note: Compensation failure is a critical situation
+            // The refund failed, which means we cannot reverse the payment
+            // This should be monitored and may require manual intervention
+            // In production, consider:
+            // 1. Publishing a refund-failed event for monitoring
+            // 2. Sending alerts to operations team
+            // 3. Logging to a separate error tracking system
+            
+            // We don't throw the exception here to avoid transaction rollback issues
+            // The error is logged for monitoring and manual intervention
         }
     }
 }

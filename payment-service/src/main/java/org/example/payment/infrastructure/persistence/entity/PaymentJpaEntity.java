@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.example.payment.domain.valueobject.PaymentStatus;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -33,4 +35,10 @@ public class PaymentJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus status;
+
+    @ElementCollection
+    @CollectionTable(name = "payment_failure_reasons", joinColumns = @JoinColumn(name = "payment_id"))
+    @Column(name = "failure_reason")
+    @Builder.Default
+    private List<String> failureReasons = new ArrayList<>();
 }

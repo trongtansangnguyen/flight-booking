@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.example.flight.application.port.output.FlightRepositoryPort;
 import org.example.flight.domain.entity.Flight;
 import org.example.flight.domain.entity.FlightStatus;
+import org.example.flight.domain.exception.AircraftNotFoundException;
+import org.example.flight.domain.exception.AirportNotFoundException;
 import org.example.flight.infrastructure.adapter.output.persistence.entity.AircraftJpaEntity;
 import org.example.flight.infrastructure.adapter.output.persistence.entity.AirportJpaEntity;
 import org.example.flight.infrastructure.adapter.output.persistence.entity.FlightJpaEntity;
@@ -126,13 +128,13 @@ public class FlightRepositoryAdapter implements FlightRepositoryPort {
     private FlightJpaEntity toJpaEntity(Flight flight) {
         // Load related entities
         AirportJpaEntity originAirport = airportJpaRepository.findById(flight.getOriginAirportId())
-            .orElseThrow(() -> new RuntimeException("Origin airport not found: " + flight.getOriginAirportId()));
+            .orElseThrow(() -> new AirportNotFoundException("Origin airport not found with ID: " + flight.getOriginAirportId()));
         
         AirportJpaEntity destinationAirport = airportJpaRepository.findById(flight.getDestinationAirportId())
-            .orElseThrow(() -> new RuntimeException("Destination airport not found: " + flight.getDestinationAirportId()));
+            .orElseThrow(() -> new AirportNotFoundException("Destination airport not found with ID: " + flight.getDestinationAirportId()));
         
         AircraftJpaEntity aircraft = aircraftJpaRepository.findById(flight.getAircraftId())
-            .orElseThrow(() -> new RuntimeException("Aircraft not found: " + flight.getAircraftId()));
+            .orElseThrow(() -> new AircraftNotFoundException("Aircraft not found with ID: " + flight.getAircraftId()));
         
         FlightJpaEntity jpa = new FlightJpaEntity();
         jpa.setId(flight.getId());

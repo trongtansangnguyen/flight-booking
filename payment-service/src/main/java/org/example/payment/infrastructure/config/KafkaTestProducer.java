@@ -1,4 +1,4 @@
-package org.example.payment.config;
+package org.example.payment.infrastructure.config;
 
 import org.example.payment.presentation.messaging.dto.OrderCreatedEvent;
 import org.springframework.boot.CommandLineRunner;
@@ -40,3 +40,4 @@ public class KafkaTestProducer {
         };
     }
 }
+

@@ -1,8 +1,11 @@
 package org.example.payment.domain.valueobject;
 
+import jakarta.persistence.Embeddable;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
+@Embeddable
 public record Money(BigDecimal amount) {
     public static final Money ZERO = new Money(BigDecimal.ZERO);
 

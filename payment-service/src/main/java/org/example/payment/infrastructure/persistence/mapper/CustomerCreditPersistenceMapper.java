@@ -16,6 +16,7 @@ public interface CustomerCreditPersistenceMapper {
 
     CustomerCredit jpaEntityToDomain(CustomerCreditJpaEntity entity);
 
+    @Mapping(target = "id", ignore = true) // ID được generate tự động bởi JPA
     CustomerCreditJpaEntity domainToJpaEntity(CustomerCredit domain);
 
     /**

@@ -1,25 +1,25 @@
 # ----- Stage 1: Build -----
-# Sử dụng base image chứa JDK (Java Development Kit) để build
 FROM eclipse-temurin:17-jdk-alpine as builder
 
-# Đặt thư mục làm việc
 WORKDIR /app
 
-# Copy các file build của Gradle (wrapper, build scripts)
+# Copy Gradle wrapper và build files
 COPY gradlew .
 COPY gradle/ gradle/
 COPY build.gradle .
 COPY settings.gradle .
 
-# Copy source code
-COPY src ./src
-
 # Cấp quyền thực thi cho gradlew
 RUN chmod +x ./gradlew
 
-# Build ứng dụng (sử dụng bootJar của Spring Boot và bỏ qua tests)
-# --no-daemon để không chạy Gradle daemon trong container
-RUN ./gradlew bootJar --no-daemon -x test
+# Download dependencies trước (để cache layer này)
+RUN ./gradlew dependencies --no-daemon --info || true
+
+# Copy source code
+COPY src ./src
+
+# Build ứng dụng với verbose output
+RUN ./gradlew bootJar --no-daemon --info --stacktrace -x test
 
 # ----- Stage 2: Runtime -----
 # Sử dụng base image chỉ chứa JRE (Java Runtime Environment)
