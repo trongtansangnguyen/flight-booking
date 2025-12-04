@@ -52,14 +52,25 @@ public class ProcessPaymentResultUseCaseImpl implements ProcessPaymentResultUseC
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderId));
 
-        // Update order status to CANCELLED
-        order.markAsCancelled();
-        Order cancelledOrder = orderRepository.save(order);
-
-        // Publish order.cancelled event (Step 11 - triggers compensation in Flight Service)
-        orderEventPublisher.publishOrderCancelled(cancelledOrder);
-
-        log.info("Order {} cancelled, published order.cancelled event for compensation", orderId);
+        // Option B: Manual Retry - Keep order in PENDING_PAYMENT status
+        // User can retry payment via API endpoint
+        // Order will only be cancelled if:
+        // 1. Reservation expires (handled by scheduled job)
+        // 2. User manually cancels
+        
+        // Check if reservation has expired
+        if (order.isReservationExpired()) {
+            // Reservation expired, cancel order and release seats
+            order.markAsCancelled("Payment failed and reservation expired");
+            Order cancelledOrder = orderRepository.save(order);
+            orderEventPublisher.publishOrderCancelled(cancelledOrder);
+            log.info("Order {} cancelled due to payment failure and expired reservation. Published order.cancelled event.", orderId);
+        } else {
+            // Reservation still valid, keep order in PENDING_PAYMENT for manual retry
+            // Just log the payment failure, order remains in PENDING_PAYMENT
+            log.warn("Payment failed for order: {}. Order remains in PENDING_PAYMENT status. " +
+                    "User can retry payment via POST /api/orders/{}/retry-payment", orderId, orderId);
+        }
     }
 }
 

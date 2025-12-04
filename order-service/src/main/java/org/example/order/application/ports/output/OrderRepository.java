@@ -1,7 +1,9 @@
 package org.example.order.application.ports.output;
 
 import org.example.order.domain.entity.Order;
+import org.example.order.domain.entity.OrderStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,5 +20,13 @@ public interface OrderRepository {
     List<Order> findByCustomerId(UUID customerId);
     
     List<Order> findAll();
+    
+    /**
+     * Find orders with specific status that have expired reservations
+     * @param status Order status (typically PENDING_PAYMENT)
+     * @param expiryTime Current time to compare against
+     * @return List of expired orders
+     */
+    List<Order> findByStatusAndReservationExpiresAtBefore(OrderStatus status, LocalDateTime expiryTime);
 }
 

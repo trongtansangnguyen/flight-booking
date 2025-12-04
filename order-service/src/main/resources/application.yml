@@ -24,3 +24,9 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: order-group
+
+# Order Service Configuration
+order:
+  reservation:
+    timeout:
+      minutes: ${ORDER_RESERVATION_TIMEOUT_MINUTES:2} # Timeout for seat reservation (default: 2 minute)

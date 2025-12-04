@@ -34,29 +34,47 @@ public class PaymentServiceImpl implements PaymentUseCase {
     public void processPayment(ProcessPaymentCommand command) {
         Optional<Payment> existingPayment = paymentRepository.findByOrderId(new OrderId(command.orderId()));
 
+        Payment payment;
+        
         if (existingPayment.isPresent()) {
-            // Nếu đã xử lý rồi -> chỉ publish lại sự kiện (nếu cần) và thoát
-            if (existingPayment.get().getStatus() == PaymentStatus.COMPLETED) {
-                paymentMessagePublisher.publishPaymentCompleted(existingPayment.get());
+            Payment existing = existingPayment.get();
+            
+            // Idempotent handling: Nếu payment đã COMPLETED, chỉ republish event
+            if (existing.getStatus() == PaymentStatus.COMPLETED) {
+                paymentMessagePublisher.publishPaymentCompleted(existing);
                 log.warn("Payment for order: {} already COMPLETED. Republishing event.", command.orderId());
-            } else {
-                paymentMessagePublisher.publishPaymentFailed(existingPayment.get());
-                log.warn("Payment for order: {} already FAILED. Republishing event.", command.orderId());
+                return;
             }
-            return;
+            
+            // Retry logic: Nếu payment đã FAILED, reset và retry lại
+            if (existing.getStatus() == PaymentStatus.FAILED) {
+                log.info("Payment for order: {} was FAILED. Resetting for retry.", command.orderId());
+                existing.resetForRetry();
+                payment = existing;
+            } else {
+                // Payment đang ở status khác (PENDING), republish event
+                if (existing.getStatus() == PaymentStatus.PENDING) {
+                    log.warn("Payment for order: {} is already PENDING. Republishing payment.failed event.", command.orderId());
+                    paymentMessagePublisher.publishPaymentFailed(existing);
+                } else {
+                    log.warn("Payment for order: {} has unexpected status: {}. Republishing payment.failed event.", 
+                            command.orderId(), existing.getStatus());
+                    paymentMessagePublisher.publishPaymentFailed(existing);
+                }
+                return;
+            }
+        } else {
+            // Tạo Payment entity mới
+            log.info("Processing new payment for order: {}", command.orderId());
+            payment = Payment.builder()
+                    .orderId(new OrderId(command.orderId()))
+                    .customerId(new CustomerId(command.customerId()))
+                    .amount(new Money(command.amount()))
+                    .build();
+            payment.initializePayment();
         }
 
-        // Nếu chưa có, tiếp tục xử lý
-        log.info("Processing payment for order: {}", command.orderId());
-
-        // Tạo Payment entity
-        Payment payment = Payment.builder()
-                .orderId(new OrderId(command.orderId()))
-                .customerId(new CustomerId(command.customerId()))
-                .amount(new Money(command.amount()))
-                .build();
-        payment.initializePayment();
-
+        // Thực hiện payment (mới hoặc retry)
         try {
             // Lấy Domain Entity CustomerCredit
             CustomerCredit customerCredit = customerCreditRepository

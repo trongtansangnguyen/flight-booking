@@ -3,10 +3,12 @@ package org.example.order.infrastructure.persistence.adapter;
 import lombok.RequiredArgsConstructor;
 import org.example.order.application.ports.output.OrderRepository;
 import org.example.order.domain.entity.Order;
+import org.example.order.domain.entity.OrderStatus;
 import org.example.order.infrastructure.persistence.mapper.OrderPersistenceMapper;
 import org.example.order.infrastructure.persistence.repository.OrderJpaRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,6 +48,13 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public List<Order> findAll() {
         return jpaRepository.findAll().stream()
+                .map(mapper::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Order> findByStatusAndReservationExpiresAtBefore(OrderStatus status, LocalDateTime expiryTime) {
+        return jpaRepository.findByStatusAndReservationExpiresAtBefore(status, expiryTime).stream()
                 .map(mapper::toDomainEntity)
                 .collect(Collectors.toList());
     }

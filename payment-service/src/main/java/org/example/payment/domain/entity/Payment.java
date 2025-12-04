@@ -79,6 +79,23 @@ public class Payment {
     }
 
     /**
+     * Reset payment for retry (from FAILED to PENDING)
+     * Used when user manually retries payment after failure
+     * @throws PaymentDomainException if payment is not in FAILED status
+     */
+    public void resetForRetry() {
+        if (this.status != PaymentStatus.FAILED) {
+            throw new PaymentDomainException(
+                    "Cannot reset payment for retry. Payment must be in FAILED status. Current status: " + this.status);
+        }
+        this.status = PaymentStatus.PENDING;
+        // Clear failure reasons for retry
+        if (this.failureReasons != null) {
+            this.failureReasons.clear();
+        }
+    }
+
+    /**
      * Validate payment invariants
      * @throws PaymentDomainException if invariants are violated
      */

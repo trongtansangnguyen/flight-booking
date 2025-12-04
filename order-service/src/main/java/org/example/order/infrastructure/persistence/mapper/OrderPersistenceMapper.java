@@ -29,6 +29,7 @@ public class OrderPersistenceMapper {
                 .failureReason(order.getFailureReason())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .reservationExpiresAt(order.getReservationExpiresAt())
                 .build();
     }
 
@@ -50,6 +51,7 @@ public class OrderPersistenceMapper {
         order.setFailureReason(jpa.getFailureReason());
         order.setCreatedAt(jpa.getCreatedAt());
         order.setUpdatedAt(jpa.getUpdatedAt());
+        order.setReservationExpiresAt(jpa.getReservationExpiresAt());
         return order;
     }
 }

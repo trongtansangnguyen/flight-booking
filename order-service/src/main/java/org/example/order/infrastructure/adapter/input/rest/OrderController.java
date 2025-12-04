@@ -6,6 +6,7 @@ import org.example.order.application.dto.CreateOrderRequest;
 import org.example.order.application.dto.OrderResponse;
 import org.example.order.application.ports.input.CreateOrderUseCase;
 import org.example.order.application.ports.input.GetOrderUseCase;
+import org.example.order.application.ports.input.RetryPaymentUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class OrderController {
 
     private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderUseCase getOrderUseCase;
+    private final RetryPaymentUseCase retryPaymentUseCase;
 
     /**
      * Create a new order
@@ -60,6 +62,19 @@ public class OrderController {
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
         List<OrderResponse> responses = getOrderUseCase.getAllOrders();
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Retry payment for an order (Manual retry - Option B)
+     * Only works if order is in PENDING_PAYMENT status and not expired
+     * 
+     * @param orderId Order ID to retry payment for
+     * @return 200 OK if retry initiated successfully
+     */
+    @PostMapping("/{orderId}/retry-payment")
+    public ResponseEntity<Void> retryPayment(@PathVariable UUID orderId) {
+        retryPaymentUseCase.retryPayment(orderId);
+        return ResponseEntity.ok().build();
     }
 }
 

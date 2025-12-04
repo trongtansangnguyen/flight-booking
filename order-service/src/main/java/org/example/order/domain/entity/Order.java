@@ -25,6 +25,7 @@ public class Order {
     private String failureReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime reservationExpiresAt; // Thời điểm hết hạn giữ chỗ
 
     // Default constructor for persistence layer
     // Factory method create() should be used for creating new orders
@@ -63,15 +64,26 @@ public class Order {
 
     /**
      * Business logic: Mark order as pending payment after seat reservation succeeds
+     * Sets reservation expiry time (default 15 minutes from now)
+     * @param reservationTimeoutMinutes Timeout in minutes for reservation (default 15)
      * @throws OrderDomainException if order status is invalid
      */
-    public void markAsPendingPayment() {
+    public void markAsPendingPayment(int reservationTimeoutMinutes) {
         if (this.status != OrderStatus.RESERVING) {
             throw new OrderDomainException(
                     "Cannot mark as pending payment. Order status must be RESERVING. Current status: " + this.status);
         }
         this.status = OrderStatus.PENDING_PAYMENT;
+        this.reservationExpiresAt = LocalDateTime.now().plusMinutes(reservationTimeoutMinutes);
         this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Business logic: Mark order as pending payment with default timeout (1 minute)
+     * @throws OrderDomainException if order status is invalid
+     */
+    public void markAsPendingPayment() {
+        markAsPendingPayment(1); // Default 1 minute
     }
 
     /**
@@ -106,16 +118,42 @@ public class Order {
     }
 
     /**
-     * Business logic: Mark order as cancelled after payment failure
+     * Business logic: Mark order as cancelled after payment failure or timeout
+     * @param reason Reason for cancellation (optional)
      * @throws OrderDomainException if order status is invalid
      */
-    public void markAsCancelled() {
+    public void markAsCancelled(String reason) {
         if (this.status != OrderStatus.PENDING_PAYMENT) {
             throw new OrderDomainException(
                     "Cannot mark as cancelled. Order status must be PENDING_PAYMENT. Current status: " + this.status);
         }
         this.status = OrderStatus.CANCELLED;
+        if (reason != null && !reason.trim().isEmpty()) {
+            this.failureReason = reason;
+        }
         this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Business logic: Mark order as cancelled after payment failure
+     * @throws OrderDomainException if order status is invalid
+     */
+    public void markAsCancelled() {
+        markAsCancelled(null);
+    }
+
+    /**
+     * Check if reservation has expired
+     * @return true if reservation has expired, false otherwise
+     */
+    public boolean isReservationExpired() {
+        if (this.status != OrderStatus.PENDING_PAYMENT) {
+            return false; // Only PENDING_PAYMENT orders can expire
+        }
+        if (this.reservationExpiresAt == null) {
+            return false; // No expiry set, consider as not expired
+        }
+        return LocalDateTime.now().isAfter(this.reservationExpiresAt);
     }
 
 }

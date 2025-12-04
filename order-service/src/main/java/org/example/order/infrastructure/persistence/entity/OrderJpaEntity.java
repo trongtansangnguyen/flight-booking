@@ -53,6 +53,9 @@ public class OrderJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
+    @Column(name = "reservation_expires_at")
+    private LocalDateTime reservationExpiresAt;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

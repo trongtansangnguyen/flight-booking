@@ -7,6 +7,7 @@ import org.example.order.application.ports.output.OrderEventPublisher;
 import org.example.order.application.ports.output.OrderRepository;
 import org.example.order.domain.entity.Order;
 import org.example.order.domain.exception.OrderNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,9 @@ public class ProcessSeatReservationResultUseCaseImpl implements ProcessSeatReser
 
     private final OrderRepository orderRepository;
     private final OrderEventPublisher orderEventPublisher;
+    
+    @Value("${order.reservation.timeout.minutes:2}")
+    private int reservationTimeoutMinutes;
 
     @Override
     @Transactional
@@ -34,9 +38,12 @@ public class ProcessSeatReservationResultUseCaseImpl implements ProcessSeatReser
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderId));
 
-        // Update order status to PENDING_PAYMENT
-        order.markAsPendingPayment();
+        // Update order status to PENDING_PAYMENT with reservation expiry time
+        order.markAsPendingPayment(reservationTimeoutMinutes);
         Order updatedOrder = orderRepository.save(order);
+        
+        log.info("Order {} marked as PENDING_PAYMENT with reservation expiry at: {}", 
+                orderId, updatedOrder.getReservationExpiresAt());
 
         // Publish order.created event (Step 6 - triggers payment service)
         orderEventPublisher.publishOrderCreated(
