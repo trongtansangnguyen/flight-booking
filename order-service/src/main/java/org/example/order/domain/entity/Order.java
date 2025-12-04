@@ -119,13 +119,14 @@ public class Order {
 
     /**
      * Business logic: Mark order as cancelled after payment failure or timeout
+     * Can cancel from PENDING_PAYMENT or CONFIRMED status
      * @param reason Reason for cancellation (optional)
      * @throws OrderDomainException if order status is invalid
      */
     public void markAsCancelled(String reason) {
-        if (this.status != OrderStatus.PENDING_PAYMENT) {
+        if (this.status != OrderStatus.PENDING_PAYMENT && this.status != OrderStatus.CONFIRMED) {
             throw new OrderDomainException(
-                    "Cannot mark as cancelled. Order status must be PENDING_PAYMENT. Current status: " + this.status);
+                    "Cannot mark as cancelled. Order status must be PENDING_PAYMENT or CONFIRMED. Current status: " + this.status);
         }
         this.status = OrderStatus.CANCELLED;
         if (reason != null && !reason.trim().isEmpty()) {
@@ -154,6 +155,20 @@ public class Order {
             return false; // No expiry set, consider as not expired
         }
         return LocalDateTime.now().isAfter(this.reservationExpiresAt);
+    }
+
+    /**
+     * Check if order can be cancelled (must be at least 24 hours before departure)
+     * @param departureTime Flight departure time
+     * @return true if can be cancelled, false otherwise
+     */
+    public boolean canBeCancelled(LocalDateTime departureTime) {
+        if (departureTime == null) {
+            return false; // Cannot check without departure time
+        }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime minCancelTime = departureTime.minusHours(24);
+        return now.isBefore(minCancelTime);
     }
 
 }

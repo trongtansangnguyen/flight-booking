@@ -2,8 +2,10 @@ package org.example.order.infrastructure.adapter.input.rest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.order.application.dto.CancelOrderRequest;
 import org.example.order.application.dto.CreateOrderRequest;
 import org.example.order.application.dto.OrderResponse;
+import org.example.order.application.ports.input.CancelOrderUseCase;
 import org.example.order.application.ports.input.CreateOrderUseCase;
 import org.example.order.application.ports.input.GetOrderUseCase;
 import org.example.order.application.ports.input.RetryPaymentUseCase;
@@ -26,6 +28,7 @@ public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderUseCase getOrderUseCase;
     private final RetryPaymentUseCase retryPaymentUseCase;
+    private final CancelOrderUseCase cancelOrderUseCase;
 
     /**
      * Create a new order
@@ -74,6 +77,28 @@ public class OrderController {
     @PostMapping("/{orderId}/retry-payment")
     public ResponseEntity<Void> retryPayment(@PathVariable UUID orderId) {
         retryPaymentUseCase.retryPayment(orderId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Cancel an order (Customer-initiated)
+     * Validates:
+     * - Order must be in PENDING_PAYMENT or CONFIRMED status
+     * - Cancellation must be at least 24 hours before flight departure
+     * - Customer must own the order
+     * 
+     * If payment was completed, triggers refund
+     * Publishes order.cancelled event to release seats
+     * 
+     * @param orderId Order ID to cancel
+     * @param request Cancel order request containing customerId
+     * @return 200 OK if cancellation successful
+     */
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
+            @PathVariable UUID orderId,
+            @RequestBody @Valid CancelOrderRequest request) {
+        cancelOrderUseCase.cancelOrder(orderId, request.customerId());
         return ResponseEntity.ok().build();
     }
 }

@@ -2,8 +2,8 @@ package org.example.payment.infrastructure.config;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.example.payment.presentation.messaging.dto.FlightReservationFailedEvent;
 import org.example.payment.presentation.messaging.dto.OrderCreatedEvent;
+import org.example.payment.presentation.messaging.dto.OrderRefundRequestedEvent;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,12 +62,12 @@ public class PaymentKafkaConsumerConfig {
         return factory;
     }
 
-    // === FlightReservationFailedEvent ===
+    // === OrderRefundRequestedEvent ===
 
     @Bean
-    public ConsumerFactory<String, FlightReservationFailedEvent> flightReservationFailedConsumerFactory() {
-        JsonDeserializer<FlightReservationFailedEvent> valueDeserializer =
-                new JsonDeserializer<>(FlightReservationFailedEvent.class, false);
+    public ConsumerFactory<String, OrderRefundRequestedEvent> orderRefundRequestedConsumerFactory() {
+        JsonDeserializer<OrderRefundRequestedEvent> valueDeserializer =
+                new JsonDeserializer<>(OrderRefundRequestedEvent.class, false);
         valueDeserializer.addTrustedPackages("*");
 
         return new DefaultKafkaConsumerFactory<>(
@@ -78,11 +78,11 @@ public class PaymentKafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, FlightReservationFailedEvent>
-    flightReservationFailedKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, FlightReservationFailedEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, OrderRefundRequestedEvent>
+    orderRefundRequestedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, OrderRefundRequestedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(flightReservationFailedConsumerFactory());
+        factory.setConsumerFactory(orderRefundRequestedConsumerFactory());
         return factory;
     }
 }

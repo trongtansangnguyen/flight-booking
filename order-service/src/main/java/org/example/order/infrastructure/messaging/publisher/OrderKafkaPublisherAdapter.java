@@ -26,6 +26,7 @@ public class OrderKafkaPublisherAdapter implements OrderEventPublisher {
     private static final String ORDER_CREATED_TOPIC = "order.created";
     private static final String ORDER_CONFIRMED_TOPIC = "order.confirmed";
     private static final String ORDER_CANCELLED_TOPIC = "order.cancelled";
+    private static final String ORDER_REFUND_REQUESTED_TOPIC = "order.refund.requested";
 
     @Override
     public void publishOrderReservationRequested(UUID orderId, UUID flightId, Integer quantityOfTickets) {
@@ -95,6 +96,22 @@ public class OrderKafkaPublisherAdapter implements OrderEventPublisher {
         } catch (Exception e) {
             log.error("Failed to publish OrderCancelled event for order: {}. Error: {}", 
                     order.getId(), e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void publishOrderRefundRequested(UUID orderId, UUID customerId, BigDecimal amount) {
+        try {
+            log.info("Publishing OrderRefundRequested event: orderId={}, customerId={}, amount={}", 
+                    orderId, customerId, amount);
+            
+            OrderRefundRequestedEvent event = new OrderRefundRequestedEvent(orderId, customerId, amount);
+            kafkaTemplate.send(ORDER_REFUND_REQUESTED_TOPIC, orderId.toString(), event);
+            
+            log.info("Successfully published OrderRefundRequested event for order: {}", orderId);
+        } catch (Exception e) {
+            log.error("Failed to publish OrderRefundRequested event for order: {}. Error: {}", 
+                    orderId, e.getMessage(), e);
         }
     }
 }

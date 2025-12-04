@@ -34,5 +34,11 @@ public interface OrderEventPublisher {
      * Topic: order.cancelled
      */
     void publishOrderCancelled(Order order);
+
+    /**
+     * Publish event when refund is requested (order cancelled after payment completed)
+     * Topic: order.refund.requested
+     */
+    void publishOrderRefundRequested(UUID orderId, UUID customerId, BigDecimal amount);
 }
 

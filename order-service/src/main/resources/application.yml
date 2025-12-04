@@ -30,3 +30,8 @@ order:
   reservation:
     timeout:
       minutes: ${ORDER_RESERVATION_TIMEOUT_MINUTES:2} # Timeout for seat reservation (default: 2 minute)
+
+# External Services Configuration
+flight:
+  service:
+    url: ${FLIGHT_SERVICE_URL:http://localhost:8081} # Flight Service URL

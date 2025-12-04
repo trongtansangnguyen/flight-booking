@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.payment.application.ports.input.PaymentUseCase;
-import org.example.payment.presentation.messaging.dto.FlightReservationFailedEvent;
 import org.example.payment.presentation.messaging.dto.OrderCreatedEvent;
+import org.example.payment.presentation.messaging.dto.OrderRefundRequestedEvent;
 import org.example.payment.presentation.messaging.mapper.PaymentEventMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -40,16 +40,18 @@ public class PaymentKafkaListener {
     }
 
     /**
-     * Lắng nghe sự kiện SAGA Compensation (Rubric B.8) từ Flight Service
+     * Lắng nghe sự kiện refund request từ Order Service
+     * Triggered when order is cancelled after payment was completed
      */
     @KafkaListener(
-            topics = "flight.reservation.failed",
+            topics = "order.refund.requested",
             groupId = "payment-group",
-            containerFactory = "flightReservationFailedKafkaListenerContainerFactory")
-    public void handleFlightReservationFailed(@Payload @Valid FlightReservationFailedEvent event) {
-        log.warn("Received FlightReservationFailed (compensation) event: {}", event.orderId());
+            containerFactory = "orderRefundRequestedKafkaListenerContainerFactory")
+    public void handleOrderRefundRequested(@Payload @Valid OrderRefundRequestedEvent event) {
+        log.warn("Received OrderRefundRequested event: orderId={}, customerId={}, amount={}", 
+                event.orderId(), event.customerId(), event.amount());
 
-        var command = eventMapper.flightFailedEventToRefundCommand(event);
+        var command = eventMapper.orderRefundRequestedEventToRefundCommand(event);
         paymentUseCase.processRefund(command);
     }
 }
